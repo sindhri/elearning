@@ -1,0 +1,85 @@
+---
+title: "E-learning"
+output: html_notebook
+---
+
+which would the best choices for advertising?
+
+loading resources
+```{r}
+library(readr)
+library(dplyr)
+library(stringr)
+library(purrr)
+```
+q: Why you're using a ready-made data set instead of organizing a survey.
+a: cost concerns.
+q: What's this data set about.
+a: satisfaction of e-learning
+q: Where can this data set be downloaded.
+a: dataquest,also https://github.com/freeCodeCamp/2017-new-coder-survey
+```{r}
+survey <- read_csv("2017-fCC-New-Coders-Survey-Data.csv")
+
+```
+
+Where are these new coders located. "CountryLive"
+What are the locations with the greatest number of new coders. "CountryLive" frequency
+How much money new coders are willing to spend on learning. 
+
+Q: Are people interested in only one subject or they can be interested in more than one subject?
+A: Some interested in only one, some intersted in more than one subject.
+
+Q: If most people are interested in more than one subject, is this sample still representative?
+A: No, this sample is not representative because most people in this survey is interested in only one subject.
+
+Q:The focus of our courses is on web and mobile development. How many people are interested in at least one of these two subjects?
+A: n = 6034
+```{r}
+survey2 <- survey %>%
+  mutate(n_JobRoleInterest = map_dbl(JobRoleInterest, function(x) length(str_split(x, ",", simplify = TRUE)))) %>%
+  select(JobRoleInterest, n_JobRoleInterest)
+
+table(survey2$n_JobRoleInterest)
+
+survey2%>%
+  filter(str_detect(JobRoleInterest, "Web") | str_detect(JobRoleInterest, "Mobile")) %>%
+           summarize(count = n())
+```
+drop rows is.na(JobRoleInterested), make a frequency table for CountryLive
+based on the results, the two markets for advertisement is US and India
+
+```{r}
+survey %>%
+  filter(!is.na(JobRoleInterest)) %>%
+  group_by(CountryLive) %>%
+  summarize(Count = n()) %>%
+  arrange(desc(Count))
+```
+
+create MoneySpentPerMonth column
+From the results, average monthly spending is the highest for US and Canada.
+However, the project meant to also take into account "JobRoleInterest" to be !is.na
+after this filter, the results have changed a great deal, india and Canada have similar number.
+
+the solution for this problem is in python!
+
+```{r}
+target_country <- c("United States of America","India","United Kingdom","Canada")
+survey %>%
+  mutate(MonthsProgramming = ifelse(0,1,MonthsProgramming)) %>%
+  mutate(MoneySpentPerMonth = MoneyForLearning/MonthsProgramming) %>%
+  filter(!is.na(JobRoleInterest))%>%
+  filter(!is.na(MoneySpentPerMonth)) %>%
+  filter(CountryLive %in% target_country) %>%
+  group_by(CountryLive) %>%
+  summarize(count = n(), MeanMonthlySpent = mean(MoneySpentPerMonth))%>%
+  arrange(desc(count))
+
+survey %>%
+  filter(CountryLive %in% target_country) %>%
+
+  group_by(CountryLive) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count))
+```
